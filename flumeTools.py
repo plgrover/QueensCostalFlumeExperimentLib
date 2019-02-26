@@ -78,7 +78,42 @@ def get_velocities(Dunedb, dune_id, profile_id,test_id, remove_bed_elevation=Tru
                 zlab.append(cell.Z)
     return ulab, zlab
 
+def get_tau_xz(Dunedb, dune_id, profile_id,test_id, scale=1, m=2.5, remove_bed_elevation=True, density=1000.):
+    dune = Dunedb['Dune'][dune_id]
+    profile = dune.Profile[profile_id].Test[test_id]
+    profile_bed = dune.Profile[profile_id].BedElevation
 
+    taulab = []
+    zlab = []
+    for j in range(profile.NumCells):
+        cell = profile.Cell[j]
+        if cell.Z > profile_bed and cell.CellNumber > 2 and cell.CellNumber < 11:
+            if remove_bed_elevation == True:
+                zlab.append(cell.Z - profile_bed)
+            else:
+                zlab.append(cell.Z)
+
+            #Uxf, Uyf, Uzf = adv_tools.clean_velocities(cell.Uxf, cell.Uyf, cell.Uzf,1.5)
+            
+            Uxf = cell.Uxf2[200:]
+            Uyf = cell.Uyf2[200:]
+            Uzf = cell.Uzf2[200:]
+
+            ''' Now calculate the turbulent kinetic energy'''
+            Ux = np.mean(Uxf)
+            uxprime = Uxf - Ux           
+
+            #Uy = np.mean(Uyf)
+            #uyprime = Uyf - Uy
+
+            Uz = np.mean(Uzf)
+            uzprime = Uzf - Uz
+            
+            tau = np.mean(uxprime * uzprime) * density * -1.0
+
+            taulab.append( tau )
+
+    return taulab, zlab
 
 def get_k(Dunedb, dune_id, profile_id,test_id, scale=1, m=2.5, remove_bed_elevation=True):
 
